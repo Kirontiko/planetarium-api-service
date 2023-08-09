@@ -1,9 +1,12 @@
+import os
+import uuid
 from datetime import datetime
 
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.text import slugify
 
 
 class ShowTheme(models.Model):
@@ -41,6 +44,13 @@ class PlanetariumDome(models.Model):
         return f"{self.name} (capacity: {self.capacity})"
 
 
+def astronomy_show_image_file_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    filename = f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
+
+    return os.path.join("uploads/astronomy_shows/", filename)
+
+
 class AstronomyShow(models.Model):
     title = models.CharField(max_length=255,
                              unique=True)
@@ -48,6 +58,8 @@ class AstronomyShow(models.Model):
                                    blank=True)
     show_themes = models.ManyToManyField(ShowTheme,
                                          related_name="astronomy_shows")
+    image = models.ImageField(null=True,
+                              upload_to=astronomy_show_image_file_path)
 
     class Meta:
         ordering = ["title"]

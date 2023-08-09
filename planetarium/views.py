@@ -3,11 +3,14 @@ from datetime import datetime
 from django.db.models import F, Count
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.mixins import (ListModelMixin,
                                    RetrieveModelMixin,
                                    CreateModelMixin)
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from planetarium.models import ShowTheme, Reservation, AstronomyShow, PlanetariumDome, ShowSession
@@ -19,7 +22,7 @@ from planetarium.serializers import (ShowThemeSerializer,
                                      AstronomyShowListSerializer,
                                      AstronomyShowSerializer,
                                      PlanetariumDomeSerializer, ShowSessionListSerializer, ShowSessionSerializer,
-                                     ShowSessionDetailSerializer)
+                                     ShowSessionDetailSerializer, AstronomyShowImageSerializer)
 
 
 class ShowThemeViewSet(CreateModelMixin,
@@ -27,6 +30,7 @@ class ShowThemeViewSet(CreateModelMixin,
                        GenericViewSet):
     queryset = ShowTheme.objects.all()
     serializer_class = ShowThemeSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
 class PlanetariumDomeViewSet(CreateModelMixin,
@@ -46,9 +50,9 @@ class ReservationViewSet(ListModelMixin,
                          CreateModelMixin,
                          GenericViewSet, ):
     queryset = Reservation.objects.prefetch_related(
-        "tickets__show_session__astronomy_show",
-        "tickets__show_session__planetarium_dome"
-    )
+        "tickets__show_session__planetarium_dome",
+        "tickets__show_session__astronomy_show")
+
     serializer_class = ReservationSerializer
     pagination_class = ReservationPagination
     permission_classes = (IsAuthenticated, )
@@ -99,8 +103,24 @@ class AstronomyShowViewSet(
             return AstronomyShowListSerializer
         if self.action == "retrieve":
             return AstronomyShowDetailSerializer
+        if self.action == "upload_image":
+            return AstronomyShowImageSerializer
 
         return AstronomyShowSerializer
+
+    @action(methods=["POST"],
+            detail=True,
+            url_path="upload-image",
+            permission_classes=[IsAdminUser],)
+    def upload_image(self, request, pk=None):
+        """Endpoint for uploading image to specific movie"""
+        astronomy_show = self.get_object()
+        serializer = self.get_serializer(astronomy_show, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         parameters=[
@@ -125,7 +145,7 @@ class AstronomyShowViewSet(
 class ShowSessionViewSet(ModelViewSet):
     queryset = (
         ShowSession.objects.all()
-        .select_related("astronomy_show", "planetarium_dome")
+        .prefetch_related("astronomy_show", "planetarium_dome")
         .annotate(
             tickets_available=(
                 F("planetarium_dome__rows") * F("planetarium_dome__seats_in_row")
@@ -134,6 +154,7 @@ class ShowSessionViewSet(ModelViewSet):
         )
     )
     serializer_class = ShowSessionSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
     def get_queryset(self):

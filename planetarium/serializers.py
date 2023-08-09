@@ -46,6 +46,7 @@ class AstronomyShowListSerializer(AstronomyShowSerializer):
             "title",
             "description",
             "show_themes",
+            "image"
         )
 
 
@@ -59,7 +60,14 @@ class AstronomyShowDetailSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "show_themes",
+            "image"
         )
+
+
+class AstronomyShowImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AstronomyShow
+        fields = ("id", "image")
 
 
 class ShowSessionSerializer(serializers.ModelSerializer):
