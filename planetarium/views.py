@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from django.db.models import F, Count
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.mixins import (ListModelMixin,
@@ -5,16 +8,18 @@ from rest_framework.mixins import (ListModelMixin,
                                    CreateModelMixin)
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from planetarium.models import ShowTheme, Reservation, AstronomyShow, PlanetariumDome
+from planetarium.models import ShowTheme, Reservation, AstronomyShow, PlanetariumDome, ShowSession
 from planetarium.permissions import IsAdminOrIfAuthenticatedReadOnly
 from planetarium.serializers import (ShowThemeSerializer,
                                      ReservationListSerializer,
                                      ReservationSerializer,
                                      AstronomyShowDetailSerializer,
                                      AstronomyShowListSerializer,
-                                     AstronomyShowSerializer, PlanetariumDomeSerializer)
+                                     AstronomyShowSerializer,
+                                     PlanetariumDomeSerializer, ShowSessionListSerializer, ShowSessionSerializer,
+                                     ShowSessionDetailSerializer)
 
 
 class ShowThemeViewSet(CreateModelMixin,
@@ -110,6 +115,62 @@ class AstronomyShowViewSet(
                 type=str,
                 description="Filter by title (ex.?title=Parade)",
                 required=False
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+class ShowSessionViewSet(ModelViewSet):
+    queryset = (
+        ShowSession.objects.all()
+        .select_related("astronomy_show", "planetarium_dome")
+        .annotate(
+            tickets_available=(
+                F("planetarium_dome__rows") * F("planetarium_dome__seats_in_row")
+                - Count("tickets")
+            )
+        )
+    )
+    serializer_class = ShowSessionSerializer
+
+
+    def get_queryset(self):
+        date = self.request.query_params.get("date")
+        astronomy_show_id_str = self.request.query_params.get("movie")
+
+        queryset = self.queryset
+
+        if date:
+            date = datetime.strptime(date, "%Y-%m-%d").date()
+            queryset = queryset.filter(show_time__date=date)
+
+        if astronomy_show_id_str:
+            queryset = queryset.filter(astronomy_show_id=int(astronomy_show_id_str))
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ShowSessionListSerializer
+
+        if self.action == "retrieve":
+            return ShowSessionDetailSerializer
+
+        return ShowSessionSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "date",
+                type={"type": "date"},
+                description="Filter by date (ex. ?date=2022-01-09)"
+            ),
+            OpenApiParameter(
+                "astronomy_show",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by astronomy show(-s) id or ids (ex. ?astronomy_show=2,3)"
             )
         ]
     )

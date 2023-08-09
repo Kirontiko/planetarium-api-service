@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class ShowTheme(models.Model):
@@ -62,11 +65,43 @@ class ShowSession(models.Model):
                                          related_name="show_sessions")
     show_time = models.DateTimeField()
 
-    class Meta:
-        ordering = ["-show_time"]
+    @staticmethod
+    def validate_show_time(show_time, error_to_raise):
+
+        now = timezone.now().astimezone(timezone.get_current_timezone())
+        if not (now < show_time):
+            now = now.strftime("%Y-%m-%d %H:%M")
+            raise error_to_raise(
+                {
+                    "show_time": f"show time must be later "
+                                 f"than {now}!"
+                }
+            )
+
+    def clean(self):
+        ShowSession.validate_show_time(
+            self.show_time,
+            ValidationError
+        )
+
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
+    ):
+        self.full_clean()
+        return super(ShowSession, self).save(
+            force_insert, force_update, using, update_fields
+        )
 
     def __str__(self):
         return f"{self.astronomy_show.title} {str(self.show_time)}"
+
+    class Meta:
+        ordering = ["-show_time"]
+        unique_together = ("astronomy_show", "planetarium_dome", "show_time")
 
 
 class Ticket(models.Model):
@@ -78,10 +113,6 @@ class Ticket(models.Model):
     reservation = models.ForeignKey(Reservation,
                                     on_delete=models.CASCADE,
                                     related_name="tickets")
-
-    class Meta:
-        unique_together = ("show_session", "row", "seat")
-        ordering = ["row", "seat"]
 
     @staticmethod
     def validate_ticket(row, seat, planetarium_dome, error_to_raise):
@@ -124,3 +155,7 @@ class Ticket(models.Model):
         return (
             f"{str(self.show_session)} (row: {self.row}, seat: {self.seat})"
         )
+
+    class Meta:
+        unique_together = ("show_session", "row", "seat")
+        ordering = ["row", "seat"]

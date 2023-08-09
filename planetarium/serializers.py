@@ -70,6 +70,40 @@ class ShowSessionSerializer(serializers.ModelSerializer):
                   "show_time",
                   "planetarium_dome", )
 
+    def validate(self, attrs):
+        data = super(ShowSessionSerializer, self).validate(attrs=attrs)
+        ShowSession.validate_show_time(
+            attrs["show_time"],
+            ValidationError
+        )
+        return data
+
+
+class ShowSessionListSerializer(ShowSessionSerializer):
+    astronomy_show_title = serializers.CharField(
+        source="astronomy_show.title",
+        read_only=True
+    )
+
+    planetarium_dome_name = serializers.CharField(
+        source="planetarium_dome.name", read_only=True
+    )
+    planetarium_dome_capacity = serializers.IntegerField(
+        source="planetarium_dome.capacity", read_only=True
+    )
+    tickets_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = ShowSession
+        fields = (
+            "id",
+            "astronomy_show_title",
+            "show_time",
+            "planetarium_dome_name",
+            "planetarium_dome_capacity",
+            "tickets_available",
+        )
+
 
 class TicketSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
@@ -90,6 +124,28 @@ class TicketSerializer(serializers.ModelSerializer):
 class TicketListSerializer(TicketSerializer):
     show_session = ShowSessionSerializer(many=False,
                                          read_only=True)
+
+
+class TicketSeatsSerializer(TicketSerializer):
+    class Meta:
+        model = Ticket
+        fields = ("row", "seat")
+
+
+class ShowSessionDetailSerializer(ShowSessionSerializer):
+    astronomy_show = AstronomyShowListSerializer(many=False, read_only=True)
+    planetarium_dome = PlanetariumDomeSerializer(many=False, read_only=True)
+    taken_places = TicketSeatsSerializer(
+        source="tickets", many=True, read_only=True
+    )
+
+    class Meta:
+        model = ShowSession
+        fields = ("id",
+                  "show_time",
+                  "astronomy_show",
+                  "planetarium_dome",
+                  "taken_places")
 
 
 class ReservationSerializer(serializers.ModelSerializer):
