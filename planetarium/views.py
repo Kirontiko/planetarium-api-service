@@ -160,7 +160,7 @@ class ShowSessionViewSet(ModelViewSet):
 
     def get_queryset(self):
         date = self.request.query_params.get("date")
-        astronomy_show_id_str = self.request.query_params.get("movie")
+        astronomy_show_id_str = self.request.query_params.get("astronomy_show")
 
         queryset = self.queryset
 
