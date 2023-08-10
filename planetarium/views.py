@@ -49,16 +49,17 @@ class ReservationPagination(PageNumberPagination):
 class ReservationViewSet(ListModelMixin,
                          CreateModelMixin,
                          GenericViewSet, ):
-    queryset = Reservation.objects.prefetch_related(
-        "tickets__show_session__planetarium_dome",
-        "tickets__show_session__astronomy_show")
+    queryset = Reservation.objects.all()
 
     serializer_class = ReservationSerializer
     pagination_class = ReservationPagination
     permission_classes = (IsAuthenticated, )
 
     def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user)
+        return Reservation.objects.filter(user=self.request.user).prefetch_related(
+            "tickets__show_session__astronomy_show",
+            "tickets__show_session__planetarium_dome"
+        )
 
     def get_serializer_class(self):
         if self.action == "list":
