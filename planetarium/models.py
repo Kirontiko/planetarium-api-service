@@ -10,8 +10,7 @@ from django.utils.text import slugify
 
 
 class ShowTheme(models.Model):
-    name = models.CharField(max_length=255,
-                            unique=True)
+    name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
         return self.name
@@ -19,9 +18,11 @@ class ShowTheme(models.Model):
 
 class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE,
-                             related_name="reservations")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reservations",
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -31,8 +32,7 @@ class Reservation(models.Model):
 
 
 class PlanetariumDome(models.Model):
-    name = models.CharField(max_length=255,
-                            unique=True)
+    name = models.CharField(max_length=255, unique=True)
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
 
@@ -52,14 +52,14 @@ def astronomy_show_image_file_path(instance, filename):
 
 
 class AstronomyShow(models.Model):
-    title = models.CharField(max_length=255,
-                             unique=True)
-    description = models.TextField(null=True,
-                                   blank=True)
-    show_themes = models.ManyToManyField(ShowTheme,
-                                         related_name="astronomy_shows")
-    image = models.ImageField(null=True,
-                              upload_to=astronomy_show_image_file_path)
+    title = models.CharField(max_length=255, unique=True)
+    description = models.TextField(null=True, blank=True)
+    show_themes = models.ManyToManyField(
+        ShowTheme, related_name="astronomy_shows"
+    )
+    image = models.ImageField(
+        null=True, upload_to=astronomy_show_image_file_path
+    )
 
     class Meta:
         ordering = ["title"]
@@ -69,39 +69,32 @@ class AstronomyShow(models.Model):
 
 
 class ShowSession(models.Model):
-    astronomy_show = models.ForeignKey(AstronomyShow,
-                                       on_delete=models.CASCADE,
-                                       related_name="show_sessions")
-    planetarium_dome = models.ForeignKey(PlanetariumDome,
-                                         on_delete=models.CASCADE,
-                                         related_name="show_sessions")
+    astronomy_show = models.ForeignKey(
+        AstronomyShow, on_delete=models.CASCADE, related_name="show_sessions"
+    )
+    planetarium_dome = models.ForeignKey(
+        PlanetariumDome, on_delete=models.CASCADE, related_name="show_sessions"
+    )
     show_time = models.DateTimeField()
 
     @staticmethod
     def validate_show_time(show_time, error_to_raise):
-
         now = timezone.now().astimezone(timezone.get_current_timezone())
         if not (now < show_time):
             now = now.strftime("%Y-%m-%d %H:%M")
             raise error_to_raise(
-                {
-                    "show_time": f"show time must be later "
-                                 f"than {now}!"
-                }
+                {"show_time": f"show time must be later " f"than {now}!"}
             )
 
     def clean(self):
-        ShowSession.validate_show_time(
-            self.show_time,
-            ValidationError
-        )
+        ShowSession.validate_show_time(self.show_time, ValidationError)
 
     def save(
-            self,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
     ):
         self.full_clean()
         return super(ShowSession, self).save(
@@ -119,16 +112,20 @@ class ShowSession(models.Model):
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
-    show_session = models.ForeignKey(ShowSession,
-                                     on_delete=models.CASCADE,
-                                     related_name="tickets")
-    reservation = models.ForeignKey(Reservation,
-                                    on_delete=models.CASCADE,
-                                    related_name="tickets")
+    show_session = models.ForeignKey(
+        ShowSession, on_delete=models.CASCADE, related_name="tickets"
+    )
+    reservation = models.ForeignKey(
+        Reservation, on_delete=models.CASCADE, related_name="tickets"
+    )
 
     @staticmethod
     def validate_ticket(row, seat, planetarium_dome, error_to_raise):
-        for ticket_attr_value, ticket_attr_name, planetarium_dome_attr_name in [
+        for (
+            ticket_attr_value,
+            ticket_attr_name,
+            planetarium_dome_attr_name,
+        ) in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
         ]:
@@ -137,9 +134,9 @@ class Ticket(models.Model):
                 raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
-                                          f"number must be in available range: "
-                                          f"(1, {planetarium_dome_attr_name}): "
-                                          f"(1, {count_attrs})"
+                        f"number must be in available range: "
+                        f"(1, {planetarium_dome_attr_name}): "
+                        f"(1, {count_attrs})"
                     }
                 )
 
@@ -152,11 +149,11 @@ class Ticket(models.Model):
         )
 
     def save(
-            self,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
     ):
         self.full_clean()
         return super(Ticket, self).save(
@@ -164,9 +161,7 @@ class Ticket(models.Model):
         )
 
     def __str__(self):
-        return (
-            f"{str(self.show_session)} (row: {self.row}, seat: {self.seat})"
-        )
+        return f"{str(self.show_session)} (row: {self.row}, seat: {self.seat})"
 
     class Meta:
         unique_together = ("show_session", "row", "seat")

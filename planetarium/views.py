@@ -5,37 +5,46 @@ from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import (ListModelMixin,
-                                   RetrieveModelMixin,
-                                   CreateModelMixin)
+from rest_framework.mixins import (
+    ListModelMixin,
+    RetrieveModelMixin,
+    CreateModelMixin,
+)
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from planetarium.models import ShowTheme, Reservation, AstronomyShow, PlanetariumDome, ShowSession
+from planetarium.models import (
+    ShowTheme,
+    Reservation,
+    AstronomyShow,
+    PlanetariumDome,
+    ShowSession,
+)
 from planetarium.permissions import IsAdminOrIfAuthenticatedReadOnly
-from planetarium.serializers import (ShowThemeSerializer,
-                                     ReservationListSerializer,
-                                     ReservationSerializer,
-                                     AstronomyShowDetailSerializer,
-                                     AstronomyShowListSerializer,
-                                     AstronomyShowSerializer,
-                                     PlanetariumDomeSerializer, ShowSessionListSerializer, ShowSessionSerializer,
-                                     ShowSessionDetailSerializer, AstronomyShowImageSerializer)
+from planetarium.serializers import (
+    ShowThemeSerializer,
+    ReservationListSerializer,
+    ReservationSerializer,
+    AstronomyShowDetailSerializer,
+    AstronomyShowListSerializer,
+    AstronomyShowSerializer,
+    PlanetariumDomeSerializer,
+    ShowSessionListSerializer,
+    ShowSessionSerializer,
+    ShowSessionDetailSerializer,
+    AstronomyShowImageSerializer,
+)
 
 
-class ShowThemeViewSet(CreateModelMixin,
-                       ListModelMixin,
-                       GenericViewSet):
+class ShowThemeViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
     queryset = ShowTheme.objects.all()
     serializer_class = ShowThemeSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
-class PlanetariumDomeViewSet(CreateModelMixin,
-                             ListModelMixin,
-                             GenericViewSet):
+class PlanetariumDomeViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
     queryset = PlanetariumDome.objects.all()
     serializer_class = PlanetariumDomeSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -46,19 +55,23 @@ class ReservationPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class ReservationViewSet(ListModelMixin,
-                         CreateModelMixin,
-                         GenericViewSet, ):
+class ReservationViewSet(
+    ListModelMixin,
+    CreateModelMixin,
+    GenericViewSet,
+):
     queryset = Reservation.objects.all()
 
     serializer_class = ReservationSerializer
     pagination_class = ReservationPagination
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return Reservation.objects.filter(user=self.request.user).prefetch_related(
+        return Reservation.objects.filter(
+            user=self.request.user
+        ).prefetch_related(
             "tickets__show_session__astronomy_show",
-            "tickets__show_session__planetarium_dome"
+            "tickets__show_session__planetarium_dome",
         )
 
     def get_serializer_class(self):
@@ -109,10 +122,12 @@ class AstronomyShowViewSet(
 
         return AstronomyShowSerializer
 
-    @action(methods=["POST"],
-            detail=True,
-            url_path="upload-image",
-            permission_classes=[IsAdminUser],)
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="upload-image",
+        permission_classes=[IsAdminUser],
+    )
     def upload_image(self, request, pk=None):
         """Endpoint for uploading image to specific movie"""
         astronomy_show = self.get_object()
@@ -129,14 +144,14 @@ class AstronomyShowViewSet(
                 "show_themes",
                 type={"type": "list", "items": {"type": "number"}},
                 description="Filter by show_themes id (ex.?show_themes=1,2)",
-                required=False
+                required=False,
             ),
             OpenApiParameter(
                 "title",
                 type=str,
                 description="Filter by title (ex.?title=Parade)",
-                required=False
-            )
+                required=False,
+            ),
         ]
     )
     def list(self, request, *args, **kwargs):
@@ -149,14 +164,14 @@ class ShowSessionViewSet(ModelViewSet):
         .prefetch_related("astronomy_show", "planetarium_dome")
         .annotate(
             tickets_available=(
-                F("planetarium_dome__rows") * F("planetarium_dome__seats_in_row")
+                F("planetarium_dome__rows")
+                * F("planetarium_dome__seats_in_row")
                 - Count("tickets")
             )
         )
     )
     serializer_class = ShowSessionSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
-
 
     def get_queryset(self):
         date = self.request.query_params.get("date")
@@ -169,7 +184,9 @@ class ShowSessionViewSet(ModelViewSet):
             queryset = queryset.filter(show_time__date=date)
 
         if astronomy_show_id_str:
-            queryset = queryset.filter(astronomy_show_id=int(astronomy_show_id_str))
+            queryset = queryset.filter(
+                astronomy_show_id=int(astronomy_show_id_str)
+            )
 
         return queryset
 
@@ -187,16 +204,15 @@ class ShowSessionViewSet(ModelViewSet):
             OpenApiParameter(
                 "date",
                 type={"type": "date"},
-                description="Filter by date (ex. ?date=2022-01-09)"
+                description="Filter by date (ex. ?date=2022-01-09)",
             ),
             OpenApiParameter(
                 "astronomy_show",
                 type={"type": "list", "items": {"type": "number"}},
-                description="Filter by astronomy show(-s) id or ids (ex. ?astronomy_show=2,3)"
-            )
+                description="Filter by astronomy show(-s)"
+                            " id or ids (ex. ?astronomy_show=2,3)",
+            ),
         ]
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-
-

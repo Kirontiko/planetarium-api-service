@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
             model_name="astronomyshow",
             name="image",
             field=models.ImageField(
-                null=True, upload_to=planetarium.models.astronomy_show_image_file_path
+                null=True,
+                upload_to=planetarium.models.astronomy_show_image_file_path,
             ),
         ),
     ]

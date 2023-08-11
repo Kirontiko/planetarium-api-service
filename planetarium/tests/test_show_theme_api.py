@@ -27,8 +27,7 @@ class AuthenticatedShowThemeTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            "testuser@test.com",
-            "testpass123"
+            "testuser@test.com", "testpass123"
         )
         self.client.force_authenticate(self.user)
 
@@ -56,9 +55,7 @@ class AdminShowThemeApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            email="testuser@test.com",
-            password="testpass123",
-            is_staff=True
+            email="testuser@test.com", password="testpass123", is_staff=True
         )
         self.client.force_authenticate(self.user)
 

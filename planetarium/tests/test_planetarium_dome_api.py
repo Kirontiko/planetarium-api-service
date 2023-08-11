@@ -24,8 +24,7 @@ class AuthenticatedPlanetariumDomeTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            "testuser@test.com",
-            "testpass123"
+            "testuser@test.com", "testpass123"
         )
         self.client.force_authenticate(self.user)
 
@@ -44,7 +43,7 @@ class AuthenticatedPlanetariumDomeTests(TestCase):
         payload = {
             "name": "Sample Planetarium Dome",
             "rows": 15,
-            "seats_in_row": 5
+            "seats_in_row": 5,
         }
         res = self.client.post(PLANETARIUM_DOME_URL, payload)
 
@@ -55,18 +54,12 @@ class AdminPlanetariumDomeApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            email="testuser@test.com",
-            password="testpass123",
-            is_staff=True
+            email="testuser@test.com", password="testpass123", is_staff=True
         )
         self.client.force_authenticate(self.user)
 
     def test_create_planetary_dome(self):
-        payload = {
-            "name": "Sample Dome",
-            "rows": 10,
-            "seats_in_row": 5
-        }
+        payload = {"name": "Sample Dome", "rows": 10, "seats_in_row": 5}
         res = self.client.post(PLANETARIUM_DOME_URL, payload)
         planetarium_dome = PlanetariumDome.objects.get(id=res.data["id"])
 

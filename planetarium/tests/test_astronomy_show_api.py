@@ -5,9 +5,14 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from planetarium.models import AstronomyShow
-from planetarium.serializers import (AstronomyShowListSerializer,
-                                     AstronomyShowDetailSerializer)
-from planetarium.tests.model_samples import sample_astronomy_show, sample_show_theme
+from planetarium.serializers import (
+    AstronomyShowListSerializer,
+    AstronomyShowDetailSerializer,
+)
+from planetarium.tests.model_samples import (
+    sample_astronomy_show,
+    sample_show_theme,
+)
 
 
 ASTRONOMY_SHOW_URL = reverse("planetarium:astronomyshow-list")
@@ -26,8 +31,7 @@ class AuthenticatedAstronomyShowTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            "testuser@test.com",
-            "testpass123"
+            "testuser@test.com", "testpass123"
         )
         self.client.force_authenticate(self.user)
 
@@ -71,7 +75,9 @@ class AuthenticatedAstronomyShowTests(TestCase):
         astronomy_show2.show_themes.add(show_theme2)
         astronomy_show3.show_themes.add(show_theme3)
 
-        res = self.client.get(ASTRONOMY_SHOW_URL, {"show_themes": f"{show_theme2.id}"})
+        res = self.client.get(
+            ASTRONOMY_SHOW_URL, {"show_themes": f"{show_theme2.id}"}
+        )
 
         serializer1 = AstronomyShowListSerializer(astronomy_show1)
         serializer2 = AstronomyShowListSerializer(astronomy_show2)
@@ -86,7 +92,9 @@ class AuthenticatedAstronomyShowTests(TestCase):
 
         astronomy_show.show_themes.set([show_theme])
 
-        url = reverse("planetarium:astronomyshow-detail", args=[astronomy_show.id])
+        url = reverse(
+            "planetarium:astronomyshow-detail", args=[astronomy_show.id]
+        )
         res = self.client.get(url)
 
         serializer = AstronomyShowDetailSerializer(astronomy_show)
@@ -95,10 +103,7 @@ class AuthenticatedAstronomyShowTests(TestCase):
         self.assertEqual(res.data, serializer.data)
 
     def test_astronomy_show_create_forbidden(self):
-        payload = {
-            "name": "Sample Astronomy Show",
-            "description": "TEST"
-        }
+        payload = {"name": "Sample Astronomy Show", "description": "TEST"}
         res = self.client.post(ASTRONOMY_SHOW_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
@@ -108,9 +113,7 @@ class AdminAstronomyShowApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            email="testuser@test.com",
-            password="testpass123",
-            is_staff=True
+            email="testuser@test.com", password="testpass123", is_staff=True
         )
         self.client.force_authenticate(self.user)
 
@@ -119,7 +122,7 @@ class AdminAstronomyShowApiTests(TestCase):
         payload = {
             "title": "Sample Astronomy_show",
             "description": "TEST",
-            "show_themes": [show_theme.id]
+            "show_themes": [show_theme.id],
         }
         res = self.client.post(ASTRONOMY_SHOW_URL, payload)
         astronomy_show = AstronomyShow.objects.get(id=res.data["id"])
@@ -130,9 +133,10 @@ class AdminAstronomyShowApiTests(TestCase):
 
     def test_delete_astronomy_show_not_allowed(self):
         astronomy_show = sample_astronomy_show()
-        url = reverse("planetarium:astronomyshow-detail", args=[astronomy_show.id])
+        url = reverse(
+            "planetarium:astronomyshow-detail", args=[astronomy_show.id]
+        )
 
         res = self.client.delete(url)
 
-        self.assertEqual(res.status_code,
-                         status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
