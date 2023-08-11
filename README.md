@@ -1,10 +1,5 @@
 # Planetarium Api Service
 
-## Check it Out
-
-[Task Manager deployed to render](https://task-manager-n7we.onrender.com)
-- Login: ```TestWorker```
-- Password: ```testpass123```
 ## Table of Contents
  1. [Introduction](#introduction)
  2. [Requirements](#requirements)
