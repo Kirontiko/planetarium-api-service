@@ -84,6 +84,9 @@ Planetarium Domes.
 
 ## Screenshots
 
+### DB Schema
+![image](https://github.com/Kirontiko/planetarium-api-service/assets/90575903/7442b3ac-7809-4e30-b08c-f5ea6b4fb777)
+
 ### Swagger
 ![image](https://github.com/Kirontiko/planetarium-api-service/assets/90575903/78e6d90c-06c0-4fb0-8ae7-44d09ea8db1e)
 ![image](https://github.com/Kirontiko/planetarium-api-service/assets/90575903/d685095f-26ee-4a59-b1bf-3471bce1b8ca)
