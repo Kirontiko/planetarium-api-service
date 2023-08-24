@@ -18,6 +18,6 @@ router.register("planetarium_domes", PlanetariumDomeViewSet)
 router.register("show_sessions", ShowSessionViewSet)
 
 
-urlpatterns = [path("", include(router.urls))]
+urlpatterns = router.urls
 
 app_name = "planetarium"
