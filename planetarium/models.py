@@ -1,6 +1,5 @@
 import os
 import uuid
-from datetime import datetime
 
 from django.conf import settings
 from django.db import models
@@ -161,7 +160,8 @@ class Ticket(models.Model):
         )
 
     def __str__(self):
-        return f"{str(self.show_session)} (row: {self.row}, seat: {self.seat})"
+        return (f"{str(self.show_session)} "
+                f"(row: {self.row}, seat: {self.seat})")
 
     class Meta:
         unique_together = ("show_session", "row", "seat")

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django.db.models import F, Count
-from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.decorators import action
