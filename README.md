@@ -18,13 +18,28 @@ Planetarium Domes.
 
 
 ## Requirements
+### For local running
 * python 3.8
 * pip
+
+### For running from docker
+* Docker
 
 ## Installation
 1. Clone this repository:
     ```https://github.com/Kirontiko/planetarium-api-service.git```
-2. Create virtual environment and activate it:
+
+ 2. Create .env file and define environmental variables following .env.example:
+    ```
+    DEBUG=True|False
+    SECRET_KEY=your django secret key
+    POSTGRES_HOST=your db host
+    POSTGRES_DB=name of your db
+    POSTGRES_USER=username of your db user
+    POSTGRES_PASSWORD=your db password
+    ```
+ ### 3. To run it locally
+1. Create virtual environment and activate it:
    * Tooltip for windows:
      - ```python -m venv venv``` 
      - ```venv\Scripts\activate```
@@ -32,31 +47,29 @@ Planetarium Domes.
      - ```python -m venv venv```
      - ```source venv/bin/activate```
 
-3. Install dependencies:
+2. Install dependencies:
     - ```pip install -r requirements.txt```
-
-4. Apply all migrations in database:
+3. Apply all migrations in database:
    - ```python manage.py migrate```
-
-5. Create superuser and apply Email and Password
+4. Run server
+   - ```python manage.py runserver```
+5. Create admin user
    - ```python manage.py createsuperuser```
 
-6. Start running django server using this command:
-   - ```python manage.py runserver```
-   - You will see something like this:
-   ```
-     Watching for file changes with StatReloader
-     System check identified no issues (0 silenced).
-     July 25, 2023 - 11:54:15
-     Django version 4.1, using settings 'config.settings'
-     Starting development server at http://127.0.0.1:8000/
-     Quit the server with CONTROL-C.```
-7. Done! Server has been started!
+### 3. To run it from docker
+1. Run command:
+      ```
+      docker-compose up --build
+      ```
+### 4. App will be available at: ```127.0.0.1:8000```
+
+
 
 ## Used technologies
 - Django framework
 - Django Rest Framework
-- SQLite
+- PostgreSQL
+- Docker
 
 
 ## Usage
